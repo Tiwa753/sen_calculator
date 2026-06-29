@@ -257,13 +257,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                             ))
                       ]))),
           //Scientific buttons
-          Expanded(
-            flex: 3,
+          SizedBox(
+            height: 155,
             child: GridView.count(
               crossAxisCount: 4,
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
               physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 1.8,
               children: [
                 _buildButton('sin',
                     bgColor: const Color(0xFF1C1C1C),
