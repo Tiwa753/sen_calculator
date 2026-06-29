@@ -54,27 +54,27 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         if (value == 'sin') result = math.sin(angle);
         if (value == 'cos') result = math.cos(angle);
         if (value == 'tan') result = math.tan(angle);
-        _expression = '$value($_display)';
+        _expression = '$value($_display) =';
         _display = _formatResult(result);
         _shouldResetDisplay = true;
       } else if (value == '√') {
         double current = double.tryParse(_display) ?? 0;
-        _expression = '√($_display)';
+        _expression = '√($_display) =';
         _display = _formatResult(math.sqrt(current));
         _shouldResetDisplay = true;
       } else if (value == 'log') {
         double current = double.tryParse(_display) ?? 0;
-        _expression = 'log($_display)';
+        _expression = 'log($_display) =';
         _display = _formatResult(math.log(current) / math.ln10);
         _shouldResetDisplay = true;
       } else if (value == 'ln') {
         double current = double.tryParse(_display) ?? 0;
-        _expression = 'ln($_display)';
+        _expression = 'ln($_display) =';
         _display = _formatResult(math.log(current));
         _shouldResetDisplay = true;
       } else if (value == 'x²') {
         double current = double.tryParse(_display) ?? 0;
-        _expression = '($_display)²';
+        _expression = '($_display)² =';
         _display = _formatResult(current * current);
         _shouldResetDisplay = true;
       } else if (value == 'xʸ') {
@@ -84,7 +84,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _shouldResetDisplay = true;
       } else if (value == '1/x') {
         double current = double.tryParse(_display) ?? 0;
-        _expression = '1/($_display)';
+        _expression = '1/($_display) =';
         _display = current == 0 ? 'Error' : _formatResult(1 / current);
         _shouldResetDisplay = true;
       } else if (value == 'π') {
@@ -97,7 +97,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _isDegree = !_isDegree;
       } else if (value == '%') {
         double current = double.tryParse(_display) ?? 0;
-        _expression = '$_display%';
+        _expression = '$_display% ';
         _display = _formatResult(current / 100);
       } else if (value == '+/-') {
         double current = double.tryParse(_display) ?? 0;
@@ -111,7 +111,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         if (_operator.isNotEmpty) {
           double secondOperand = double.tryParse(_display) ?? 0;
           double result = 0;
-          _expression = '$_expression $_display =';
+          _expression = '$_expression $_display = ${_formatResult(result)}';
           switch (_operator) {
             case '+':
               result = _firstOperand + secondOperand;
@@ -218,7 +218,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         children: [
           //Display
           Expanded(
-              flex: 2,
+              flex: 1,
               child: Container(
                   width: double.infinity,
                   alignment: Alignment.bottomRight,
