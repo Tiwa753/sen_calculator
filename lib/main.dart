@@ -86,6 +86,54 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _expression = '$_display^';
         _operator = 'xʸ';
         _shouldResetDisplay = true;
+      } else if (value == 'sinh' || value == 'cosh' || value == 'tanh') {
+        double x = double.tryParse(_display) ?? 0;
+        double result = 0;
+        if (value == 'sinh') result = (math.exp(x) - math.exp(-x)) / 2;
+        if (value == 'cosh') result = (math.exp(x) + math.exp(-x)) / 2;
+        if (value == 'tanh') {
+          double sinhX = (math.exp(x) - math.exp(-x)) / 2;
+          double coshX = (math.exp(x) + math.exp(-x)) / 2;
+          result = sinhX / coshX;
+        }
+        _expression = '$value($_display) = ${_formatResult(result)}';
+        _display = _formatResult(result);
+        _shouldResetDisplay = true;
+      } else if (value == '∛') {
+        double x = double.tryParse(_display) ?? 0;
+        double result = x < 0
+            ? -math.pow(-x, 1 / 3).toDouble()
+            : math.pow(x, 1 / 3).toDouble();
+        _expression = '∛($_display) = ${_formatResult(result)}';
+        _display = _formatResult(result);
+        _shouldResetDisplay = true;
+      } else if (value == '|x|') {
+        double x = double.tryParse(_display) ?? 0;
+        double result = x.abs();
+        _expression = '|$_display| = ${_formatResult(result)}';
+        _display = _formatResult(result);
+        _shouldResetDisplay = true;
+      } else if (value == 'x!') {
+        double x = double.tryParse(_display) ?? 0;
+        if (x < 0 || x % 1 != 0) {
+          _display = 'Error';
+        } else {
+          double result = _factorial(x.toInt());
+          _expression = '$_display! = ${_formatResult(result)}';
+          _display = _formatResult(result);
+        }
+        _shouldResetDisplay = true;
+      } else if (value == 'EXP') {
+        double x = double.tryParse(_display) ?? 0;
+        double result = math.pow(10, x).toDouble();
+        _expression = '10^$_display = ${_formatResult(result)}';
+        _display = _formatResult(result);
+        _shouldResetDisplay = true;
+      } else if (value == 'nPr' || value == 'nCr' || value == 'mod') {
+        _firstOperand = double.tryParse(_display) ?? 0;
+        _expression = '$_display $value';
+        _operator = value;
+        _shouldResetDisplay = true;
       } else if (value == '1/x') {
         double current = double.tryParse(_display) ?? 0;
         if (current == 0) {
@@ -144,6 +192,21 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             case 'xʸ':
               result = math.pow(_firstOperand, secondOperand).toDouble();
               break;
+            case 'nPr':
+              result = _permutation(_firstOperand, secondOperand);
+              break;
+            case 'nCr':
+              result = _combination(_firstOperand, secondOperand);
+              break;
+            case 'mod':
+              result = _firstOperand % secondOperand;
+              break;
+          }
+          if (result.isNaN) {
+            _display = 'Error';
+            _operator = '';
+            _shouldResetDisplay = true;
+            return;
           }
           _expression = '$_expression $_display = ${_formatResult(result)}';
           _display = _formatResult(result);
@@ -176,48 +239,79 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
   }
 
+  double _factorial(int n) {
+    if (n <= 1) return 1;
+    double result = 1;
+    for (int i = 2; i <= n; i++) {
+      result *= i;
+    }
+    return result;
+  }
+
+  double _permutation(double n, double r) {
+    int ni = n.toInt();
+    int ri = r.toInt();
+    if (ni < 0 || ri < 0 || ri > ni) return double.nan;
+    return _factorial(ni) / _factorial(ni - ri);
+  }
+
+  double _combination(double n, double r) {
+    int ni = n.toInt();
+    int ri = r.toInt();
+    if (ni < 0 || ri < 0 || ri > ni) return double.nan;
+    return _factorial(ni) / (_factorial(ri) * _factorial(ni - ri));
+  }
+
   Widget _buildButton(String label,
       {Color? bgColor,
       Color? textColor,
       Color? glowColor,
       bool isSmall = false}) {
-    return GestureDetector(
-      onTap: () => _onButtonPressed(label),
-      child: Container(
-        margin: EdgeInsets.all(isSmall ? 3 : 5),
-        decoration: BoxDecoration(
-          color: bgColor ?? const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(isSmall ? 12 : 18),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.08),
-            width: 1,
-          ),
-          boxShadow: [
-            if (glowColor != null)
-              BoxShadow(
-                color: glowColor.withValues(alpha: 0.5),
-                blurRadius: 14,
-                spreadRadius: 1,
-              ),
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onButtonPressed(label),
+        child: Container(
+          margin: EdgeInsets.all(isSmall ? 3 : 5),
+          decoration: BoxDecoration(
+            color: bgColor ?? const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(isSmall ? 12 : 18),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.08),
+              width: 1,
             ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: isSmall ? 15 : 20,
-              fontWeight: FontWeight.w500,
-              color: textColor ?? Colors.white,
-              letterSpacing: 0.5,
+            boxShadow: [
+              if (glowColor != null)
+                BoxShadow(
+                  color: glowColor.withValues(alpha: 0.5),
+                  blurRadius: 14,
+                  spreadRadius: 1,
+                ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.4),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: isSmall ? 13 : 20,
+                fontWeight: FontWeight.w500,
+                color: textColor ?? Colors.white,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRow(List<Widget> buttons) {
+    return Expanded(
+      child: Row(children: buttons),
     );
   }
 
@@ -235,7 +329,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           children: [
             // Display area
             Expanded(
-              flex: 2,
+              flex: 1,
               child: Container(
                 width: double.infinity,
                 alignment: Alignment.bottomRight,
@@ -283,76 +377,172 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               ),
             ),
 
-            // Scientific buttons (3 rows x 4)
+            // Scientific buttons - 3 rows
             Expanded(
-              flex: 3,
-              child: GridView.count(
-                crossAxisCount: 4,
-                padding: const EdgeInsets.fromLTRB(6, 6, 6, 0),
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildButton('sin',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                  _buildButton('cos',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                  _buildButton('tan',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                  _buildButton(_isDegree ? 'DEG' : 'RAD',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                  _buildButton('√',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                  _buildButton('log',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                  _buildButton('ln',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                  _buildButton('π',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                  _buildButton('x²',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                  _buildButton('xʸ',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                  _buildButton('1/x',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                  _buildButton('e',
-                      bgColor: sciBgColor, textColor: sciColor, isSmall: true),
-                ],
+              flex: 1,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(3, 6, 3, 0),
+                child: Column(
+                  children: [
+                    _buildRow([
+                      _buildButton('sin',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('cos',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('tan',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton(_isDegree ? 'DEG' : 'RAD',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                    ]),
+                    _buildRow([
+                      _buildButton('√',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('log',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('ln',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('π',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                    ]),
+                    _buildRow([
+                      _buildButton('x²',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('xʸ',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('1/x',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('e',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                    ]),
+                  ],
+                ),
               ),
             ),
 
-            // Main buttons (5 rows x 4)
+            // Extra functions - 2 rows x 5 (new)
+            SizedBox(
+              height: 88,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(3, 4, 3, 0),
+                child: Column(
+                  children: [
+                    _buildRow([
+                      _buildButton('sinh',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('cosh',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('tanh',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('nPr',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('nCr',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                    ]),
+                    _buildRow([
+                      _buildButton('x!',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('∛',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('|x|',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('mod',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                      _buildButton('EXP',
+                          bgColor: sciBgColor,
+                          textColor: sciColor,
+                          isSmall: true),
+                    ]),
+                  ],
+                ),
+              ),
+            ),
+
+            // Main buttons - 5 rows
             Expanded(
-              flex: 5,
-              child: GridView.count(
-                crossAxisCount: 4,
-                padding: const EdgeInsets.fromLTRB(6, 0, 6, 6),
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildButton('C', bgColor: topRowColor),
-                  _buildButton('⌫', bgColor: topRowColor),
-                  _buildButton('%', bgColor: topRowColor),
-                  _buildButton('÷',
-                      bgColor: operatorColor, glowColor: operatorColor),
-                  _buildButton('7'),
-                  _buildButton('8'),
-                  _buildButton('9'),
-                  _buildButton('×',
-                      bgColor: operatorColor, glowColor: operatorColor),
-                  _buildButton('4'),
-                  _buildButton('5'),
-                  _buildButton('6'),
-                  _buildButton('-',
-                      bgColor: operatorColor, glowColor: operatorColor),
-                  _buildButton('1'),
-                  _buildButton('2'),
-                  _buildButton('3'),
-                  _buildButton('+',
-                      bgColor: operatorColor, glowColor: operatorColor),
-                  _buildButton('+/-'),
-                  _buildButton('0'),
-                  _buildButton('.'),
-                  _buildButton('=',
-                      bgColor: operatorColor, glowColor: operatorColor),
-                ],
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(3, 0, 3, 6),
+                child: Column(
+                  children: [
+                    _buildRow([
+                      _buildButton('C', bgColor: topRowColor),
+                      _buildButton('⌫', bgColor: topRowColor),
+                      _buildButton('%', bgColor: topRowColor),
+                      _buildButton('÷',
+                          bgColor: operatorColor, glowColor: operatorColor),
+                    ]),
+                    _buildRow([
+                      _buildButton('7'),
+                      _buildButton('8'),
+                      _buildButton('9'),
+                      _buildButton('×',
+                          bgColor: operatorColor, glowColor: operatorColor),
+                    ]),
+                    _buildRow([
+                      _buildButton('4'),
+                      _buildButton('5'),
+                      _buildButton('6'),
+                      _buildButton('-',
+                          bgColor: operatorColor, glowColor: operatorColor),
+                    ]),
+                    _buildRow([
+                      _buildButton('1'),
+                      _buildButton('2'),
+                      _buildButton('3'),
+                      _buildButton('+',
+                          bgColor: operatorColor, glowColor: operatorColor),
+                    ]),
+                    _buildRow([
+                      _buildButton('+/-'),
+                      _buildButton('0'),
+                      _buildButton('.'),
+                      _buildButton('=',
+                          bgColor: operatorColor, glowColor: operatorColor),
+                    ]),
+                  ],
+                ),
               ),
             ),
           ],
